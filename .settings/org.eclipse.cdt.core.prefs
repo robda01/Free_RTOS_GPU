@@ -1,0 +1,17 @@
+doxygen/doxygen_new_line_after_brief=true
+doxygen/doxygen_use_brief_tag=false
+doxygen/doxygen_use_javadoc_tags=true
+doxygen/doxygen_use_pre_tag=false
+doxygen/doxygen_use_structural_commands=false
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/BATCH_BUILD/delimiter=;
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/BATCH_BUILD/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/BATCH_BUILD/value=1
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/IDF_PATH/delimiter=;
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/IDF_PATH/operation=replace
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/IDF_PATH/value=C\:\\msys32\\home\\Darren\\esp\\ESP8266_RTOS_SDK
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/PATH/delimiter=;
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/PATH/operation=replace
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/PATH/value=C\:\\msys32\\usr\\bin;C\:\\msys32\\mingw32\\bin;C\:\\msys32\\home\\Darren\\esp\\xtensa-lx106-elf\\bin
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.cygwin.base.901104791/appendContributed=true
