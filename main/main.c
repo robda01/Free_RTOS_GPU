@@ -7,21 +7,28 @@
 #include "freertos/queue.h"
 
 #include "driver/gpio.h"
+#include "driver/i2c.h"
 
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_err.h"
+#include "ltc2309.h"
+#include "mpu6050.h"
+
+
 
 static const char *TAG = "main";
+
 
 /**
  * Brief:
  * This test code shows how to configure gpio and how to use gpio interrupt.
  *
  * GPIO status:
- * GPIO15: output
  * GPIO16: output
- * GPIO4:  input, pulled up, interrupt from rising edge and falling edge
- * GPIO5:  input, pulled up, interrupt from rising edge.
+ * GPIO2: output
+ * GPIO0:  input, pulled up, interrupt from rising edge and falling edge
+ * GPIO15:  input, pulled up, interrupt from rising edge.
  *
  * Test:
  * Connect GPIO15 with GPIO4
@@ -30,7 +37,7 @@ static const char *TAG = "main";
  *
  */
 
-#define GPIO_OUTPUT_IO_0    5
+#define GPIO_OUTPUT_IO_0    16
 #define GPIO_OUTPUT_IO_1    2
 #define GPIO_OUTPUT_PIN_SEL  ((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1))
 #define GPIO_INPUT_IO_0     0
@@ -55,6 +62,8 @@ static void gpio_task_example(void *arg)
         }
     }
 }
+
+
 
 void app_main(void)
 {
@@ -87,8 +96,12 @@ void app_main(void)
 
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+
     //start gpio task
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+    //start i2c task
+    //xTaskCreate(i2c_task_mpu6050_example, "i2c_task_example", 2048, NULL, 10, NULL);
+    xTaskCreate(i2c_task_ltc2309_example, "i2c_task_example", 2048, NULL, 10, NULL);
 
     //install gpio isr service
     gpio_install_isr_service(0);
@@ -103,7 +116,6 @@ void app_main(void)
     gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void *) GPIO_INPUT_IO_0);
 
     int cnt = 0;
-
     while (1) {
     	printf("[%d] Hello world!\n", cnt);
         ESP_LOGI(TAG, "cnt: %d\n", cnt++);

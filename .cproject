@@ -29,7 +29,7 @@
             			
             <storageModule moduleId="cdtBuildSystem" version="4.0.0">
                 				
-                <configuration artifactName="${ProjName}" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cygwin.base.901104791" name="Default" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=" parent="org.eclipse.cdt.build.core.emptycfg">
+                <configuration artifactName="${ProjName}" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cygwin.base.901104791" name="Default" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="org.eclipse.cdt.build.core.emptycfg">
                     					
                     <folderInfo id="cdt.managedbuild.toolchain.gnu.cygwin.base.901104791.2014922619" name="/" resourcePath="">
                         						
@@ -62,6 +62,8 @@
                                     <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp8266\include&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\log\include&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp_common\include&quot;"/>
                                     								
                                 </option>
                                 								

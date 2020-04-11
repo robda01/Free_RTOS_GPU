@@ -1,5 +1,5 @@
 /*
- * io.h
+ * pcf8574.h
  *
  *  Created on: 7/04/2020
  *      Author: Darren
@@ -10,7 +10,9 @@
 
 
 
+#define ENGINE_IS_HYBRID
 
+void engine_start(void);
 
 
 #endif /* MAIN_IO_H_ */
