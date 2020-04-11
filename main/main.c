@@ -14,10 +14,12 @@
 #include "esp_err.h"
 #include "ltc2309.h"
 #include "mpu6050.h"
+#include "LiquidCrystal_I2C.h"
 
 
 
 static const char *TAG = "main";
+
 
 
 /**
@@ -44,7 +46,7 @@ static const char *TAG = "main";
 #define GPIO_INPUT_IO_1     15
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0) | (1ULL<<GPIO_INPUT_IO_1))
 
-static xQueueHandle gpio_evt_queue = NULL;
+xQueueHandle gpio_evt_queue = NULL;
 
 static void gpio_isr_handler(void *arg)
 {
@@ -64,8 +66,7 @@ static void gpio_task_example(void *arg)
 }
 
 
-
-void app_main(void)
+void user_init(void)
 {
     gpio_config_t io_conf;
     //disable interrupt
@@ -97,12 +98,6 @@ void app_main(void)
     //create a queue to handle gpio event from isr
     gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
 
-    //start gpio task
-    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
-    //start i2c task
-    //xTaskCreate(i2c_task_mpu6050_example, "i2c_task_example", 2048, NULL, 10, NULL);
-    xTaskCreate(i2c_task_ltc2309_example, "i2c_task_example", 2048, NULL, 10, NULL);
-
     //install gpio isr service
     gpio_install_isr_service(0);
     //hook isr handler for specific gpio pin
@@ -115,6 +110,20 @@ void app_main(void)
     //hook isr handler for specific gpio pin again
     gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void *) GPIO_INPUT_IO_0);
 
+}
+
+
+void app_main(void)
+{
+
+	user_init();
+    //start gpio task
+    xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
+    //start i2c task
+    //xTaskCreate(i2c_task_mpu6050_example, "i2c_task_example", 2048, NULL, 10, NULL);
+    xTaskCreate(i2c_task_ltc2309_example, "i2c_task_example", 2048, NULL, 10, NULL);
+
+
     int cnt = 0;
     while (1) {
     	printf("[%d] Hello world!\n", cnt);
@@ -126,3 +135,4 @@ void app_main(void)
 
 
 }
+

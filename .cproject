@@ -49,6 +49,18 @@
                             							
                             <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base.1854285613" name="Cygwin C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.base">
                                 								
+                                <option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.cpp.compiler.option.include.paths.322929303" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\freertos\include&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp8266\include&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\log\include&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp_common\include&quot;"/>
+                                    								
+                                </option>
+                                								
                                 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin.1706926740" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input.cygwin"/>
                                 							
                             </tool>
