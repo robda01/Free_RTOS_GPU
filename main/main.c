@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "freertos/FreeRTOS.h"
+#include <freertos/FreeRTOS.h>
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
@@ -13,8 +13,7 @@
 #include "esp_system.h"
 #include "esp_err.h"
 #include "ltc2309.h"
-#include "mpu6050.h"
-#include "LiquidCrystal_I2C.h"
+
 
 
 
@@ -120,7 +119,6 @@ void app_main(void)
     //start gpio task
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
     //start i2c task
-    //xTaskCreate(i2c_task_mpu6050_example, "i2c_task_example", 2048, NULL, 10, NULL);
     xTaskCreate(i2c_task_ltc2309_example, "i2c_task_example", 2048, NULL, 10, NULL);
 
 
@@ -131,6 +129,7 @@ void app_main(void)
         vTaskDelay(1000 / portTICK_RATE_MS);
        // gpio_set_level(GPIO_OUTPUT_IO_0, cnt % 2);
         gpio_set_level(GPIO_OUTPUT_IO_1, cnt % 2);
+
     }
 
 

@@ -1,6 +1,6 @@
 # Edit following two lines to set component requirements (see docs)
-set(COMPONENT_REQUIRES )
-set(COMPONENT_PRIV_REQUIRES "ltc2309" "mpu6050" "LiquidCrystal_I2C")
+set(COMPONENT_REQUIRES "i2c" )
+set(COMPONENT_PRIV_REQUIRES "ltc2309")
 set(EXTRA_COMPONENT_DIRS="components"
 
 set(COMPONENT_SRCS "main.c" )
