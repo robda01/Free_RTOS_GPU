@@ -5,6 +5,7 @@
 #include <freertos/FreeRTOS.h>
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 
 #include "driver/gpio.h"
 #include "driver/i2c.h"
@@ -13,11 +14,14 @@
 #include "esp_system.h"
 #include "esp_err.h"
 #include "ltc2309.h"
+#include "hd44780.h"
 
 
 
 
-static const char *TAG = "main";
+static const char *MAIN_TAG = "main";
+static const char *LTC2309_TAG = "ltc2309";
+static const char *GPIO_TAG = "gpio";
 
 
 
@@ -46,6 +50,72 @@ static const char *TAG = "main";
 #define GPIO_INPUT_PIN_SEL  ((1ULL<<GPIO_INPUT_IO_0) | (1ULL<<GPIO_INPUT_IO_1))
 
 xQueueHandle gpio_evt_queue = NULL;
+SemaphoreHandle_t xSemaphore = NULL;
+
+
+
+
+void i2c_task_hd44780(void *arg)
+{
+	static const uint8_t char_data[] = {
+	    0x04, 0x0e, 0x0e, 0x0e, 0x1f, 0x00, 0x04, 0x00,
+	    0x1f, 0x11, 0x0a, 0x04, 0x0a, 0x11, 0x1f, 0x00,
+		0x1f, 0x1f, 0x0e, 0x04, 0x0e, 0x1f, 0x1f, 0x00
+	};
+
+	xSemaphore = xSemaphoreCreateMutex();
+
+    if( xSemaphore != NULL )
+    {
+    	if( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) )
+    	{
+    		hd44780_t lcd = {
+    					.i2c_dev.bus = I2C_MASTER_NUM,
+    					.i2c_dev.addr = PCF8574_ADDR,
+    					.font = HD44780_FONT_5X8,
+    					.lines = 2,
+    					.pins = {
+    						.rs = 0,
+    						.e  = 2,
+    						.d4 = 4,
+    						.d5 = 5,
+    						.d6 = 6,
+    						.d7 = 7,
+    						.bl = 3
+    					},
+    					.backlight = true
+    				};
+
+
+    			hd44780_init(&lcd);
+    			hd44780_upload_character(&lcd, 0, char_data);
+    			hd44780_upload_character(&lcd, 1, char_data + 8);
+    			hd44780_upload_character(&lcd, 2, char_data + 16);
+
+    			hd44780_gotoxy(&lcd, 0, 0);
+    			hd44780_puts(&lcd, "\x08 Hello world!");
+    			hd44780_gotoxy(&lcd, 0, 1);
+    			hd44780_puts(&lcd, "\x09 \x0A");
+
+
+			char time[40];
+
+			    while (true)
+			    {
+			        hd44780_gotoxy(&lcd, 4, 1);
+			        sprintf(time, "testing !!");
+			        //snprintf(time, 7, "%u     ", 1000 / portTICK_RATE_MS);
+			        time[sizeof(time) - 1] = 0;
+
+			        hd44780_puts(&lcd, time);
+			        vTaskDelay(1000 / portTICK_RATE_MS);
+			    }
+			i2c_driver_delete(I2C_MASTER_NUM);
+			xSemaphoreGive( xSemaphore );
+        }
+    }
+
+}
 
 static void gpio_isr_handler(void *arg)
 {
@@ -59,13 +129,13 @@ static void gpio_task_example(void *arg)
 
     for (;;) {
         if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-            ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+            ESP_LOGI(GPIO_TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
         }
     }
 }
 
 
-void user_init(void)
+void gpio_init(void)
 {
     gpio_config_t io_conf;
     //disable interrupt
@@ -111,21 +181,63 @@ void user_init(void)
 
 }
 
+void i2c_task_ltc2309(void *arg)
+{
+
+	uint8_t sensor_data[2];
+    float Temp;
+    int ret;
+    int x;
+	xSemaphore = xSemaphoreCreateMutex();
+
+
+    if( xSemaphore != NULL )
+    {
+    	if( xSemaphoreTake( xSemaphore, ( TickType_t ) 0 ) )
+    	{
+
+			while (1) {
+
+				memset(sensor_data, 0, 2);
+				ESP_LOGI(LTC2309_TAG, "*******************\n");
+				for (x=0;x<8;x++)
+				{
+
+					ret = i2c_master_ltc2309_read(I2C_MASTER_NUM, channel[x], sensor_data);
+
+					if (ret == ESP_OK) {
+
+						Temp = ((double)(int16_t)((sensor_data[0] << 4) | sensor_data[1]>>4)/770);
+						ESP_LOGI(LTC2309_TAG, "TEMP%i: %f\n",x, (float)Temp);
+					}
+				}
+				vTaskDelay(100 / portTICK_RATE_MS);
+
+			}
+			i2c_driver_delete(I2C_MASTER_NUM);
+			xSemaphoreGive( xSemaphore );
+    	}
+	}
+}
 
 void app_main(void)
 {
 
-	user_init();
+
+	i2c_master_init();
+	gpio_init();
+
     //start gpio task
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
     //start i2c task
-    xTaskCreate(i2c_task_ltc2309_example, "i2c_task_example", 2048, NULL, 10, NULL);
+    xTaskCreate(i2c_task_ltc2309, "i2c_task_example1", 2048, NULL, 10, NULL);
+    xTaskCreate(i2c_task_hd44780, "i2c_task_example2", 2048, NULL, 10, NULL);
 
 
     int cnt = 0;
     while (1) {
     	printf("[%d] Hello world!\n", cnt);
-        ESP_LOGI(TAG, "cnt: %d\n", cnt++);
+        ESP_LOGI(MAIN_TAG, "cnt: %d\n", cnt++);
         vTaskDelay(1000 / portTICK_RATE_MS);
        // gpio_set_level(GPIO_OUTPUT_IO_0, cnt % 2);
         gpio_set_level(GPIO_OUTPUT_IO_1, cnt % 2);
@@ -134,4 +246,5 @@ void app_main(void)
 
 
 }
+
 

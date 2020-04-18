@@ -10,12 +10,11 @@
 #include "ltc2309.h"
 
 
-static const char *TAG = "ltc2309";
 
 /**
  * @brief i2c master initialization
  */
-esp_err_t i2c_master_init()
+/*esp_err_t i2c_master_init()
 {
     int i2c_master_port = I2C_MASTER_NUM;
     i2c_config_t conf;
@@ -28,7 +27,7 @@ esp_err_t i2c_master_init()
     ESP_ERROR_CHECK(i2c_driver_install(i2c_master_port, conf.mode));
     ESP_ERROR_CHECK(i2c_param_config(i2c_master_port, &conf));
     return ESP_OK;
-}
+}*/
 
 /**
  * @brief test code to write mpu6050
@@ -98,7 +97,7 @@ esp_err_t i2c_master_ltc2309_read(i2c_port_t i2c_num, uint8_t reg_address, uint8
     i2c_master_write_byte(cmd, LTC2309_SENSOR_ADDR << 1 | WRITE_BIT, ACK_CHECK_EN);
     i2c_master_write_byte(cmd, reg_address, ACK_CHECK_EN);
     i2c_master_stop(cmd);
-    ret = i2c_master_cmd_begin(i2c_num, cmd, 1000 / portTICK_RATE_MS);
+    ret = i2c_master_cmd_begin(i2c_num, cmd, 5000 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
 
     if (ret != ESP_OK) {
@@ -123,36 +122,7 @@ esp_err_t i2c_master_ltc2309_init(i2c_port_t i2c_num)
     return ESP_OK;
 }
 
-void i2c_task_ltc2309_example(void *arg)
-{
 
-	uint8_t sensor_data[2];
-    float Temp;
-    int ret;
-    int x;
-    i2c_master_ltc2309_init(I2C_MASTER_NUM);
-
-
-    while (1) {
-
-        memset(sensor_data, 0, 2);
-        ESP_LOGI(TAG, "*******************\n");
-        for (x=0;x<8;x++)
-        {
-
-			ret = i2c_master_ltc2309_read(I2C_MASTER_NUM, channel[x], sensor_data);
-
-			if (ret == ESP_OK) {
-
-				Temp = ((double)(int16_t)((sensor_data[0] << 4) | sensor_data[1]>>4)/770);
-				ESP_LOGI(TAG, "TEMP%i: %f\n",x, (float)Temp);
-			}
-        }
-        vTaskDelay(100 / portTICK_RATE_MS);
-    }
-
-    i2c_driver_delete(I2C_MASTER_NUM);
-}
 
 
 

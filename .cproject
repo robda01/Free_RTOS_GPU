@@ -58,6 +58,8 @@
                                     <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp8266\include\driver&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp8266\include&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\freertos\include\freertos&quot;"/>
                                     								
                                 </option>
                                 								
@@ -80,6 +82,10 @@
                                     <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp_common\include&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\esp8266\include&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\freertos\include\freertos&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;C:\msys32\home\Darren\esp\ESP8266_RTOS_SDK\components\freertos\include\&quot;"/>
                                     								
                                 </option>
                                 								

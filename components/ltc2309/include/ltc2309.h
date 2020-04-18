@@ -15,6 +15,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 
 #include "esp_log.h"
 #include "esp_system.h"
@@ -83,29 +84,7 @@ extern "C" {
 #define NACK_VAL                            0x1              /*!< I2C nack value */
 #define LAST_NACK_VAL                       0x2              /*!< I2C last_nack value */
 
-/**
- * Define the mpu6050 register address:
- */
-#define SMPLRT_DIV      0x19
-#define CONFIG          0x1A
-#define GYRO_CONFIG     0x1B
-#define ACCEL_CONFIG    0x1C
-#define ACCEL_XOUT_H    0x3B
-#define ACCEL_XOUT_L    0x3C
-#define ACCEL_YOUT_H    0x3D
-#define ACCEL_YOUT_L    0x3E
-#define ACCEL_ZOUT_H    0x3F
-#define ACCEL_ZOUT_L    0x40
-#define TEMP_OUT_H      0x41
-#define TEMP_OUT_L      0x42
-#define GYRO_XOUT_H     0x43
-#define GYRO_XOUT_L     0x44
-#define GYRO_YOUT_H     0x45
-#define GYRO_YOUT_L     0x46
-#define GYRO_ZOUT_H     0x47
-#define GYRO_ZOUT_L     0x48
-#define PWR_MGMT_1      0x6B
-#define WHO_AM_I        0x75  /*!< Command to read WHO_AM_I reg */
+
 
 static const int channel[8]={	LTC2309_CHANNEL_0_COM,\
 								LTC2309_CHANNEL_1_COM,\
@@ -120,7 +99,7 @@ esp_err_t i2c_master_init(void);
 esp_err_t i2c_master_ltc2309_write(i2c_port_t i2c_num, uint8_t *data);
 esp_err_t i2c_master_ltc2309_read(i2c_port_t i2c_num, uint8_t reg_address, uint8_t *data);
 esp_err_t i2c_master_ltc2309_init(i2c_port_t i2c_num);
-void i2c_task_ltc2309_example(void *arg);
+
 
 #ifdef __cplusplus
 }
