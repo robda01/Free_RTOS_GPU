@@ -2,4 +2,4 @@
 
 idf_component_register(SRCS "max7219.c"
                        INCLUDE_DIRS "."
-                       REQUIRES FreeRTOS task queue esp_log esp_system esp_err i2c)
+                       REQUIRES FreeRTOS task queue esp_log esp_system esp_err spi)

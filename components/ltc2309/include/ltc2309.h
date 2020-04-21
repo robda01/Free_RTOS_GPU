@@ -95,10 +95,10 @@ static const int channel[8]={	LTC2309_CHANNEL_0_COM,\
 								LTC2309_CHANNEL_6_COM,\
 								LTC2309_CHANNEL_7_COM,};
 
-esp_err_t i2c_master_init(void);
+
 esp_err_t i2c_master_ltc2309_write(i2c_port_t i2c_num, uint8_t *data);
 esp_err_t i2c_master_ltc2309_read(i2c_port_t i2c_num, uint8_t reg_address, uint8_t *data);
-esp_err_t i2c_master_ltc2309_init(i2c_port_t i2c_num);
+
 
 
 #ifdef __cplusplus

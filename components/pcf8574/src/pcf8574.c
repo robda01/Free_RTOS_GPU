@@ -1,6 +1,5 @@
 #include "pcf8574.h"
 
-//static const char *TAG1 = "pcf8574";
 
 esp_err_t i2c_slave_write(i2c_port_t bus, uint8_t slave_addr, uint8_t *data, uint8_t *buff, size_t len)
 {
@@ -84,20 +83,7 @@ void pcf8574_gpio_write(i2c_dev_t *dev, uint8_t num, bool value)
 /**
  * @brief i2c master initialization
  */
-esp_err_t i2c_master_init()
-{
-    int i2c_master_port = I2C_MASTER_NUM;
-    i2c_config_t conf;
-    conf.mode = I2C_MODE_MASTER;
-    conf.sda_io_num = I2C_MASTER_SDA_IO;
-    conf.sda_pullup_en = 0;
-    conf.scl_io_num = I2C_MASTER_SCL_IO;
-    conf.scl_pullup_en = 0;
-    conf.clk_stretch_tick = 15; // 300 ticks, Clock stretch is about 210us, you can make changes according to the actual situation.
-    ESP_ERROR_CHECK(i2c_driver_install(i2c_master_port, conf.mode));
-    ESP_ERROR_CHECK(i2c_param_config(i2c_master_port, &conf));
-    return ESP_OK;
-}
+
 
 void check_i2c_error(const char *tag, esp_err_t error)
 {

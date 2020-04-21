@@ -1,7 +1,12 @@
-# include it as 'max7219/max7219.h'
-INC_DIRS += $(max7219_ROOT)..
+#
+# Component Makefile
+#
 
-# args for passing into compile rule generation
-max7219_SRC_DIR = $(max7219_ROOT)
+COMPONENT_ADD_INCLUDEDIRS := include
+COMPONENT_SRCDIRS := src
 
-$(eval $(call component_compile_rules,max7219))
+# just to remove make compiling warning
+src/stack_check.o: <:=
+
+# disable stack protection in files which are involved in initialization of that feature
+src/stack_check.o: CFLAGS := $(filter-out -fstack-protector%, $(CFLAGS))

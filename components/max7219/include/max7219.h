@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "freertos/FreeRTOS.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -19,6 +21,10 @@ extern "C"
 
 #define MAX7219_MAX_CASCADE_SIZE 8
 #define MAX7219_MAX_BRIGHTNESS   31
+
+#define MAX7219_DC_GPIO     					15
+#define MAX7219_RST_GPIO   					 	12
+#define MAX7219_PIN_SEL  						(1ULL<<MAX7219_DC_GPIO) | (1ULL<<MAX7219_DC_GPIO)
 
 /**
  * Display descriptor
@@ -34,6 +40,9 @@ typedef struct
 
     bool bcd;
 } max7219_display_t;
+
+static esp_err_t oled_set_dc(uint8_t dc);
+static void IRAM_ATTR spi_event_callback(int event, void *arg);
 
 /**
  * Initialize display: switch it to normal operation from shutdown mode,

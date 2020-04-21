@@ -7,9 +7,12 @@
  * BSD Licensed as described in the file LICENSE
  */
 #include "max7219.h"
-#include <esp/spi.h>
-#include <esp/gpio.h>
+#include <driver/spi.h>
+#include <driver/gpio.h>
 #include <string.h>
+
+#include "freertos/FreeRTOS.h"
+#include "esp_log.h"
 
 #include "max7219_priv.h"
 
@@ -37,6 +40,20 @@
 #define VAL_CLEAR_BCD    0x0f
 #define VAL_CLEAR_NORMAL 0x00
 
+static const char *TAG = "max7219";
+
+static uint8_t oled_dc_level = 0;
+
+
+
+static esp_err_t oled_set_dc(uint8_t dc)
+{
+	ESP_LOGI(TAG, "set_dc");
+    oled_dc_level = dc;
+    return ESP_OK;
+}
+
+/*
 static const spi_settings_t bus_settings = {
     .mode         = SPI_MODE0,
     .freq_divider = SPI_FREQ_DIV_10M,
@@ -44,9 +61,10 @@ static const spi_settings_t bus_settings = {
     .minimal_pins = true,
     .endianness   = SPI_BIG_ENDIAN
 };
-
+*/
 static void send(const max7219_display_t *disp, uint8_t chip, uint16_t value)
 {
+	ESP_LOGI(TAG, "Send");
     uint16_t buf[MAX7219_MAX_CASCADE_SIZE] = { 0 };
     if (chip == ALL_CHIPS)
     {
@@ -55,16 +73,16 @@ static void send(const max7219_display_t *disp, uint8_t chip, uint16_t value)
     }
     else buf[chip] = value;
 
-    spi_settings_t old_settings;
-    spi_get_settings(SPI_BUS, &old_settings);
-    spi_set_settings(SPI_BUS, &bus_settings);
-    gpio_write(disp->cs_pin, false);
-
-    spi_transfer(SPI_BUS, buf, NULL, disp->cascade_size, SPI_16BIT);
-
-    gpio_write(disp->cs_pin, true);
-    spi_set_settings(SPI_BUS, &old_settings);
+    spi_trans_t trans;
+    memset(&trans, 0x0, sizeof(trans));
+    trans.mosi = (uint32_t*) buf;
+    trans.bits.mosi = 8 * 2 * MAX7219_MAX_CASCADE_SIZE;      // status length is 128 bits
+    oled_set_dc(0);
+    spi_trans(HSPI_HOST, &trans);
+    return;
 }
+
+
 
 bool max7219_init(max7219_display_t *disp)
 {
@@ -81,8 +99,8 @@ bool max7219_init(max7219_display_t *disp)
         return false;
     }
 
-    gpio_enable(disp->cs_pin, GPIO_OUTPUT);
-    gpio_write(disp->cs_pin, true);
+//    gpio_enable(disp->cs_pin, GPIO_OUTPUT);
+//    gpio_write(disp->cs_pin, true);
 
     // Shutdown all chips
     max7219_set_shutdown_mode(disp, true);

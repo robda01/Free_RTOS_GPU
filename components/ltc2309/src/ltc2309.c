@@ -115,12 +115,6 @@ esp_err_t i2c_master_ltc2309_read(i2c_port_t i2c_num, uint8_t reg_address, uint8
     return ret;
 }
 
-esp_err_t i2c_master_ltc2309_init(i2c_port_t i2c_num)
-{
-    vTaskDelay(100 / portTICK_RATE_MS);
-    i2c_master_init();
-    return ESP_OK;
-}
 
 
 
