@@ -6,9 +6,6 @@
  * Copyright (C) 2017 Ruslan V. Uss <unclerus@gmail.com>
  * BSD Licensed as described in the file LICENSE
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "max7219.h"
 #include <driver/spi.h>
@@ -44,10 +41,9 @@
 #define VAL_CLEAR_BCD    0x0f
 #define VAL_CLEAR_NORMAL 0x00
 
-static const char *TAG = "max7219";
+//static const char *TAG = "max7219";
 
-static uint8_t oled_dc_level = 0;
-
+uint8_t oled_dc_level = 0;
 
 
 static esp_err_t oled_set_dc(uint8_t dc)
@@ -55,6 +51,8 @@ static esp_err_t oled_set_dc(uint8_t dc)
     oled_dc_level = dc;
     return ESP_OK;
 }
+
+
 
 /*
 static const spi_settings_t bus_settings = {
@@ -67,7 +65,7 @@ static const spi_settings_t bus_settings = {
 */
 
 
-static void send(const max7219_display_t *disp, uint8_t chip, uint16_t value)
+static esp_err_t  send(const max7219_display_t *disp, uint8_t chip, uint16_t value)
 {
     uint32_t buf[MAX7219_MAX_CASCADE_SIZE] = { 0 };
     if (chip == ALL_CHIPS)

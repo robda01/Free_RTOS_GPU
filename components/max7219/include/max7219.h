@@ -41,8 +41,7 @@ typedef struct
     bool bcd;
 } max7219_display_t;
 
-static esp_err_t oled_set_dc(uint8_t dc);
-static void IRAM_ATTR spi_event_callback(int event, void *arg);
+//esp_err_t oled_set_dc(uint8_t dc);
 
 /**
  * Initialize display: switch it to normal operation from shutdown mode,
