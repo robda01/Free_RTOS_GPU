@@ -19,7 +19,7 @@ extern "C"
 {
 #endif
 
-#define MAX7219_MAX_CASCADE_SIZE 8
+#define MAX7219_MAX_CASCADE_SIZE 1
 #define MAX7219_MAX_BRIGHTNESS   31
 
 #define MAX7219_DC_GPIO     					15

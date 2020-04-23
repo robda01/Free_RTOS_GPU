@@ -54,39 +54,18 @@ static const char *MAX7219_TAG = "max7219";
 #define GPIO_OUTPUT_PIN_SEL  					((1ULL<<GPIO_OUTPUT_IO_0) | (1ULL<<GPIO_OUTPUT_IO_1))
 #define GPIO_INPUT_IO_0     					0
 #define GPIO_INPUT_PIN_SEL 						(1ULL<<GPIO_INPUT_IO_0)
+
 #define SPI_WRITE_BUFFER_MAX_SIZE               2048
 
-#define CS_PIN 15
-#define DELAY 2000
-
-static max7219_display_t disp = {
-    .cs_pin       = CS_PIN,
-    .digits       = 8,
-    .cascade_size = 1,
-    .mirrored     = true
-};
-
 static SemaphoreHandle_t semphor = NULL;
-
-xQueueHandle gpio_evt_queue = NULL;
+static xQueueHandle gpio_evt_queue = NULL;
 static SemaphoreHandle_t xSemaphore = NULL;
-
-typedef enum {
-    SPI_SEND = 0,
-    SPI_RECV
-} spi_master_mode_t;
-
-static uint8_t oled_dc_level = 0;
-
-
 
 static void IRAM_ATTR gpio_isr_handler(void *arg)
 {
     uint32_t gpio_num = (uint32_t) arg;
     xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
-
-
 
 void i2c_task_hd44780(void *arg)
 {
@@ -300,16 +279,10 @@ void spi_master_init(void)
     // Register SPI event callback function
     spi_config.event_cb = spi_event_callback;
     spi_init(HSPI_HOST, &spi_config);
-
-
-
 }
-
-
 
 void i2c_task_ltc2309(void *arg)
 {
-
 	uint8_t sensor_data[2];
     float Temp;
     int ret;
@@ -347,21 +320,163 @@ void i2c_task_ltc2309(void *arg)
 }
 
 
+
+#define OLED_DC_GPIO     15
+#define OLED_RST_GPIO    12
+#define OLED_PIN_SEL  (1ULL<<OLED_DC_GPIO) | (1ULL<<OLED_RST_GPIO)
+
+static uint8_t oled_dc_level = 0;
+
+static esp_err_t oled_delay_ms(uint32_t time)
+{
+    vTaskDelay(time / portTICK_RATE_MS);
+    return ESP_OK;
+}
+
+static esp_err_t oled_set_dc(uint8_t dc)
+{
+    oled_dc_level = dc;
+    return ESP_OK;
+}
+
+// Write an 8-bit cmd
+static esp_err_t oled_write_cmd(uint8_t data)
+{
+    uint32_t buf = data << 24; // In order to improve the transmission efficiency, it is recommended that the external incoming data is (uint32_t *) type data, do not use other type data.
+    spi_trans_t trans = {0};
+    trans.mosi = &buf;
+    trans.bits.mosi = 8;
+    oled_set_dc(0);
+    spi_trans(HSPI_HOST, &trans);
+    return ESP_OK;
+}
+
+static esp_err_t spi_write_unit16(uint16_t data)
+{
+    uint32_t buf = data << 16; // In order to improve the transmission efficiency, it is recommended that the external incoming data is (uint32_t *) type data, do not use other type data.
+    spi_trans_t trans = {0};
+    trans.mosi = &buf;
+    trans.bits.mosi = 8*2;
+    oled_set_dc(1);
+    spi_trans(HSPI_HOST, &trans);
+    return ESP_OK;
+}
+
+static esp_err_t oled_rst()
+{
+    gpio_set_level(OLED_RST_GPIO, 0);
+    oled_delay_ms(200);
+    gpio_set_level(OLED_RST_GPIO, 1);
+    oled_delay_ms(100);
+    return ESP_OK;
+}
+
+static esp_err_t oled_init()
+{
+    oled_rst(); // Reset OLED
+    oled_write_cmd(0xAE);    // Set Display ON/OFF (AEh/AFh)
+    oled_write_cmd(0x00);    // Set Lower Column Start Address for Page Addressing Mode (00h~0Fh)
+    oled_write_cmd(0x10);    // Set Higher Column Start Address for Page Addressing Mode (10h~1Fh)
+    oled_write_cmd(0x40);    // Set Display Start Line (40h~7Fh)
+    oled_write_cmd(0x81);    // Set Contrast Control for BANK0 (81h)
+    oled_write_cmd(0xCF);    //
+    oled_write_cmd(0xA1);    // Set Segment Re-map (A0h/A1h)
+    oled_write_cmd(0xC8);    // Set COM Output Scan Direction (C0h/C8h)
+    oled_write_cmd(0xA6);    // Set Normal/Inverse Display (A6h/A7h)
+    oled_write_cmd(0xA8);    // Set Multiplex Ratio (A8h)
+    oled_write_cmd(0x3F);    //
+    oled_write_cmd(0xD3);    // Set Display Offset (D3h)
+    oled_write_cmd(0x00);    // Set Lower Column Start Address for Page Addressing Mode (00h~0Fh)
+    oled_write_cmd(0xD5);    // Set Display Clock Divide Ratio/ Oscillator Frequency (D5h)
+    oled_write_cmd(0x80);    //
+    oled_write_cmd(0xD9);    // Set Pre-charge Period (D9h)
+    oled_write_cmd(0xF1);    //
+    oled_write_cmd(0xDA);    // Set COM Pins Hardware Configuration (DAh)
+    oled_write_cmd(0x12);    // Set Higher Column Start Address for Page Addressing Mode (10h~1Fh)
+    oled_write_cmd(0xDB);    // Set VCOMH  Deselect Level (DBh)
+    oled_write_cmd(0x40);    // Set Display Start Line (40h~7Fh)
+    oled_write_cmd(0x20);    // Set Memory Addressing Mode (20h)
+    oled_write_cmd(0x02);    // Set Lower Column Start Address for Page Addressing Mode (00h~0Fh)
+    oled_write_cmd(0x8D);    //
+    oled_write_cmd(0x14);    // Set Higher Column Start Address for Page Addressing Mode (10h~1Fh)
+    oled_write_cmd(0xA4);    // Entire Display ON (A4h/A5h)
+    oled_write_cmd(0xA6);    // Set Normal/Inverse Display (A6h/A7h)
+    oled_write_cmd(0xAF);    // Set Display ON/OFF (AEh/AFh)
+    return ESP_OK;
+}
+
+static esp_err_t oled_set_pos(uint8_t x_start, uint8_t y_start)
+{
+    oled_write_cmd(0xb0 + y_start);
+    oled_write_cmd(((x_start & 0xf0) >> 4) | 0x10);
+    oled_write_cmd((x_start & 0x0f) | 0x01);
+    return ESP_OK;
+}
+
+typedef enum {
+    MAX7219_NOP = 0,
+	MAX7219_DIGIT_0 	= 1,
+	MAX7219_DIGIT_1 	= 2,
+	MAX7219_DIGIT_2	 	= 3,
+	MAX7219_DIGIT_3 	= 4,
+	MAX7219_DIGIT_4 	= 5,
+	MAX7219_DIGIT_5 	= 6,
+	MAX7219_DIGIT_6 	= 7,
+	MAX7219_DIGIT_7 	= 8,
+	MAX7219_DECODE_MODE = 9,
+	MAX7219_INTENSITY	= 10,
+	MAX7219_SCAN_LIMIT	= 11,
+	MAX7219_SHUT_DOWN	= 12,
+	MAX7219_DISPLAY_TEST= 15
+} max7219_address_int_type_t;
+
+
+/*
+typedef struct{
+	max7219_address_int_type_t address;              //ADDRESS
+	uint8_t data;              //Data
+}max7219_uint16_t;
+*/
+
+
+typedef union {
+	uint16_t val;
+	struct{
+		uint8_t data;              //Data
+		uint8_t address;              //ADDRESS
+
+	};
+
+}max7219_uint16_t;
+
+//static esp_err_t oled_clear(uint8_t data)
+static esp_err_t oled_clear(max7219_uint16_t data)
+{
+    uint32_t buf[16];
+    buf[0] = data.val<<16 ;
+    spi_trans_t trans = {0};
+    trans.mosi = buf;
+    trans.bits.mosi = 4 * 8;
+    oled_set_dc(1);
+    spi_trans(HSPI_HOST, &trans);
+    return ESP_OK;
+}
+
 static void IRAM_ATTR spi_event_callback(int event, void *arg)
 {
-	switch (event) {
+    switch (event) {
         case SPI_INIT_EVENT: {
 
         }
         break;
 
         case SPI_TRANS_START_EVENT: {
-            gpio_set_level(MAX7219_DC_GPIO, oled_dc_level);
+            gpio_set_level(OLED_DC_GPIO, 0);
         }
         break;
 
         case SPI_TRANS_DONE_EVENT: {
-
+        	gpio_set_level(OLED_DC_GPIO, 1);
         }
         break;
 
@@ -370,31 +485,89 @@ static void IRAM_ATTR spi_event_callback(int event, void *arg)
         break;
     }
 }
+#define CS_PIN 5
+#define DELAY 2000
 
-
+static max7219_display_t disp = {
+    .cs_pin       = CS_PIN,
+    .digits       = 8,
+    .cascade_size = 1,
+    .mirrored     = true
+};
 
 void spi_max7219_task(void *arg)
 {
+
+    uint8_t x = 0;
+//    max7219_uint16_t data;
+
+//	data.address = 0x01;
+//	data.data = 0xAA;
+
+    ESP_LOGI(SPI_TAG, "init gpio");
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pin_bit_mask = OLED_PIN_SEL;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+
+   // ESP_LOGI(SPI_TAG, "init hspi addr %x data %x val %x",data.address ,data.data, data.val);
+
+    spi_config_t spi_config;
+    // Load default interface parameters
+    // CS_EN:1, MISO_EN:1, MOSI_EN:1, BYTE_TX_ORDER:1, BYTE_TX_ORDER:1, BIT_RX_ORDER:0, BIT_TX_ORDER:0, CPHA:0, CPOL:0
+    spi_config.interface.val = SPI_DEFAULT_INTERFACE;
+    spi_config.interface.byte_tx_order=1;
+    // Load default interrupt enable
+    // TRANS_DONE: true, WRITE_STATUS: false, READ_STATUS: false, WRITE_BUFFER: false, READ_BUFFER: false
+    spi_config.intr_enable.val = SPI_MASTER_DEFAULT_INTR_ENABLE;
+    // Cancel hardware cs
+    spi_config.interface.cs_en = 0;
+    // MISO pin is used for DC
+    spi_config.interface.miso_en = 0;
+    // CPOL: 1, CPHA: 1
+    spi_config.interface.cpol = 1;
+    spi_config.interface.cpha = 1;
+    // Set SPI to master mode
+    // 8266 Only support half-duplex
+    spi_config.mode = SPI_MASTER_MODE;
+    // Set the SPI clock frequency division factor
+    spi_config.clk_div = SPI_2MHz_DIV; //SPI_10MHz_DIV;
+    // Register SPI event callback function
+    spi_config.event_cb = spi_event_callback;
+    spi_init(HSPI_HOST, &spi_config);
+
+    ESP_LOGI(SPI_TAG, "init oled");
+ //   oled_init();
+ //   oled_clear(0x00);
 
     max7219_init(&disp);
     //max7219_set_decode_mode(&disp, true);
 
     char buf[9];
-    while (true)
-    {
-        max7219_clear(&disp);
-        max7219_draw_text(&disp, 0, "7219LEDS");
-        vTaskDelay(DELAY / portTICK_PERIOD_MS);
+    while (1) {
+//		oled_clear(data);
+//   	oled_write_cmd(0x55);
+//   	spi_write_unit16(data);
+//       ESP_LOGI(SPI_TAG, "send 0xAAAA on SPI");
 
-        max7219_clear(&disp);
-        sprintf(buf, "%2.4f A", 34.6782);
-        max7219_draw_text(&disp, 0, buf);
-        vTaskDelay(DELAY / portTICK_PERIOD_MS);
+//		x++;
+		max7219_clear(&disp);
+		max7219_draw_text(&disp, 0, "7219LEDS");
+		vTaskDelay(DELAY / portTICK_PERIOD_MS);
 
-        max7219_clear(&disp);
-        sprintf(buf, "%08x", esp_random());
-        max7219_draw_text(&disp, 0, buf);
-        vTaskDelay(DELAY / portTICK_PERIOD_MS);
+		max7219_clear(&disp);
+		sprintf(buf, "%2.4f A", 34.6782);
+		max7219_draw_text(&disp, 0, buf);
+		vTaskDelay(DELAY / portTICK_PERIOD_MS);
+
+		max7219_clear(&disp);
+		sprintf(buf, "%08x", esp_random());
+		max7219_draw_text(&disp, 0, buf);
+		vTaskDelay(DELAY / portTICK_PERIOD_MS);
+
     }
 }
 
@@ -404,23 +577,15 @@ void app_main(void)
     semphor = xSemaphoreCreateBinary();
 
 	gpio_init();
-	spi_master_init();
+	//spi_master_init();
 	i2c_master_init();
-
-	max7219_display_t disp;
-
-	disp.bcd = 0;
-	disp.cascade_size =1;
-	disp.cs_pin = 15;
-	disp.digits =2;
-	disp.mirrored = 0;
 
     //start gpio task
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
     //start i2c task
     xTaskCreate(i2c_task_ltc2309, "i2c_task_example1", 2048, NULL, 10, NULL);
     xTaskCreate(i2c_task_hd44780, "i2c_task_example2", 2048, NULL, 10, NULL);
-    xTaskCreate(spi_max7219_task, "spi_max7219_task", 2048, NULL, 3, NULL);
+    xTaskCreate(spi_max7219_task, "spi_max7219_task", 2048, NULL, 10, NULL);
 
 
 

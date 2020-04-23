@@ -6,6 +6,10 @@
  * Copyright (C) 2017 Ruslan V. Uss <unclerus@gmail.com>
  * BSD Licensed as described in the file LICENSE
  */
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "max7219.h"
 #include <driver/spi.h>
 #include <driver/gpio.h>
@@ -48,7 +52,6 @@ static uint8_t oled_dc_level = 0;
 
 static esp_err_t oled_set_dc(uint8_t dc)
 {
-	ESP_LOGI(TAG, "set_dc");
     oled_dc_level = dc;
     return ESP_OK;
 }
@@ -62,27 +65,26 @@ static const spi_settings_t bus_settings = {
     .endianness   = SPI_BIG_ENDIAN
 };
 */
+
+
 static void send(const max7219_display_t *disp, uint8_t chip, uint16_t value)
 {
-	ESP_LOGI(TAG, "Send");
-    uint16_t buf[MAX7219_MAX_CASCADE_SIZE] = { 0 };
+    uint32_t buf[MAX7219_MAX_CASCADE_SIZE] = { 0 };
     if (chip == ALL_CHIPS)
     {
         for (uint8_t i = 0; i < disp->cascade_size; i++)
-            buf[i] = value;
+            buf[i] = value<<16;
     }
-    else buf[chip] = value;
+    else buf[chip] = value<<16;
 
-    spi_trans_t trans;
-    memset(&trans, 0x0, sizeof(trans));
-    trans.mosi = (uint32_t*) buf;
-    trans.bits.mosi = 8 * 2 * MAX7219_MAX_CASCADE_SIZE;      // status length is 128 bits
-    oled_set_dc(0);
+
+    spi_trans_t trans = {0};
+    trans.mosi = buf;
+    trans.bits.mosi = 8*2;
+    oled_set_dc(1);
     spi_trans(HSPI_HOST, &trans);
-    return;
+    return ESP_OK;
 }
-
-
 
 bool max7219_init(max7219_display_t *disp)
 {
