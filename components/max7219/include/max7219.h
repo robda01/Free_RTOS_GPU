@@ -19,12 +19,10 @@ extern "C"
 {
 #endif
 
-#define MAX7219_MAX_CASCADE_SIZE 1
+#define MAX7219_MAX_CASCADE_SIZE 8
 #define MAX7219_MAX_BRIGHTNESS   31
 
-#define MAX7219_DC_GPIO     					15
-#define MAX7219_RST_GPIO   					 	12
-#define MAX7219_PIN_SEL  						(1ULL<<MAX7219_DC_GPIO) | (1ULL<<MAX7219_DC_GPIO)
+
 
 /**
  * Display descriptor

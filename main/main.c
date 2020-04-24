@@ -107,8 +107,8 @@ typedef union {
 
 static max7219_display_t disp = {
     .cs_pin       = CS_PIN,
-    .digits       = 8,
-    .cascade_size = 1,
+    .digits       = 16,
+    .cascade_size = 2,
     .mirrored     = true
 };
 
@@ -243,7 +243,8 @@ void spi_master_init(void)
     // Load default interface parameters
     // CS_EN:1, MISO_EN:1, MOSI_EN:1, BYTE_TX_ORDER:1, BYTE_TX_ORDER:1, BIT_RX_ORDER:0, BIT_TX_ORDER:0, CPHA:0, CPOL:0
     spi_config.interface.val = SPI_DEFAULT_INTERFACE;
-    spi_config.interface.byte_tx_order=1;
+    spi_config.interface.bit_tx_order=0;
+    spi_config.interface.byte_tx_order=0;
     // Load default interrupt enable
     // TRANS_DONE: true, WRITE_STATUS: false, READ_STATUS: false, WRITE_BUFFER: false, READ_BUFFER: false
     spi_config.intr_enable.val = SPI_MASTER_DEFAULT_INTR_ENABLE;
@@ -258,7 +259,7 @@ void spi_master_init(void)
     // 8266 Only support half-duplex
     spi_config.mode = SPI_MASTER_MODE;
     // Set the SPI clock frequency division factor
-    spi_config.clk_div = SPI_2MHz_DIV; //SPI_10MHz_DIV;
+    spi_config.clk_div = SPI_10MHz_DIV; //SPI_10MHz_DIV;
     // Register SPI event callback function
     spi_config.event_cb = spi_event_callback;
     spi_init(HSPI_HOST, &spi_config);
@@ -427,21 +428,31 @@ void spi_max7219_task(void *arg)
     max7219_init(&disp);
     //max7219_set_decode_mode(&disp, true);
 
-    char buf[9];
+    static char buf[MAX7219_MAX_CASCADE_SIZE*8+1] = {0};
     while (1) {
 
-		max7219_clear(&disp);
-		max7219_draw_text(&disp, 0, "7219LEDS");
-		vTaskDelay(DELAY / portTICK_PERIOD_MS);
+    	disp.mirrored = false;
 
+		for (int j = 0;j < disp.digits;j++)
+		{
+			max7219_clear(&disp);
+			max7219_set_digit(&disp, j, 'H');
+			vTaskDelay(500 / portTICK_PERIOD_MS);
+
+		}
+
+    	disp.mirrored = true;
 		max7219_clear(&disp);
-		sprintf(buf, "%2.4f A", 34.6782);
-		max7219_draw_text(&disp, 0, buf);
+		sprintf(buf, "%2.4f A %08x ", 34.6782, esp_random());
+		max7219_draw_text(&disp, 4, buf);
 		vTaskDelay(DELAY / portTICK_PERIOD_MS);
 
 		max7219_clear(&disp);
 		sprintf(buf, "%08x", esp_random());
 		max7219_draw_text(&disp, 0, buf);
+		vTaskDelay(DELAY / portTICK_PERIOD_MS);
+
+		max7219_clear(&disp);
 		vTaskDelay(DELAY / portTICK_PERIOD_MS);
 
     }

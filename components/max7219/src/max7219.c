@@ -19,6 +19,7 @@
 
 #define SPI_BUS 1
 
+static const char *MAX7219_TAG = "max7219";
 //#define MAX7219_DEBUG
 
 #ifdef MAX7219_DEBUG
@@ -65,20 +66,25 @@ static const spi_settings_t bus_settings = {
 */
 
 
+
 static esp_err_t  send(const max7219_display_t *disp, uint8_t chip, uint16_t value)
 {
-    uint32_t buf[MAX7219_MAX_CASCADE_SIZE] = { 0 };
+	value= ((value<<8)&0xff00)|((value>>8)&0x00ff);
+
+    static uint16_t buf[MAX7219_MAX_CASCADE_SIZE] = { 0 };
     if (chip == ALL_CHIPS)
     {
         for (uint8_t i = 0; i < disp->cascade_size; i++)
-            buf[i] = value<<16;
+            buf[i] = value;
     }
-    else buf[chip] = value<<16;
+    else buf[chip] = value;
 
+
+//    ESP_LOGI(MAX7219_TAG,"B1: %0x B2: %0x == 32B1: %0x",buf[0],buf[1], *((uint32_t *)(buf)));
 
     spi_trans_t trans = {0};
-    trans.mosi = buf;
-    trans.bits.mosi = 8*2;
+    trans.mosi = ((uint32_t *)(buf));
+    trans.bits.mosi = 8*2*disp->cascade_size;
     oled_set_dc(1);
     spi_trans(HSPI_HOST, &trans);
     return ESP_OK;
@@ -111,7 +117,7 @@ bool max7219_init(max7219_display_t *disp)
     // Set normal decode mode & clear display
     max7219_set_decode_mode(disp, false);
     // Set minimal brightness
-    max7219_set_brightness(disp, 0);
+    max7219_set_brightness(disp, 5);
     // Wake up
     max7219_set_shutdown_mode(disp, false);
 
@@ -192,7 +198,7 @@ inline static uint8_t get_char(const max7219_display_t *disp, char c)
 
 void max7219_draw_text(const max7219_display_t *disp, uint8_t pos, const char *s)
 {
-    while (s && pos < disp->digits)
+    while (*s!=NULL && pos < disp->digits)
     {
         uint8_t c = get_char(disp, *s);
         if (*(s + 1) == '.')
